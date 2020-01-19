@@ -2975,7 +2975,7 @@ module.exports = {
         logs.push({
             code: "WARNING.TEXT_SIZES_SHOULD_BE_EQUAL",
             error: "Тексты в блоке warning должны быть одного размера",
-            location: size.loc
+            location: this._pos(size.loc)
         });
     },
 
@@ -3017,7 +3017,7 @@ module.exports = {
         logs.push({
             code: "WARNING.INVALID_BUTTON_SIZE",
             error: "Размер кнопки должен быть выше эталонного на 1 пункт",
-            location: size.loc
+            location: this._pos(size.loc)
         });
     },
 
@@ -3045,7 +3045,7 @@ module.exports = {
         logs.push({
             code: "WARNING.INVALID_PLACEHOLDER_SIZE",
             error: "Допустимые размеры для блока placeholder в блоке warning (значение модификатора size): s, m, l.",
-            location: size.loc
+            location: this._pos(size.loc)
         });
     },
 
@@ -3066,7 +3066,7 @@ module.exports = {
                 logs.push({
                     code: "WARNING.INVALID_BUTTON_POSITION",
                     error: "Блок button в блоке warning не может находиться перед блоком placeholder на том же или более глубоком уровне вложенности.",
-                    location: parent.help.button_loc
+                    location: this._pos(parent.help.button_loc)
                 });
             }
 
@@ -3115,7 +3115,7 @@ module.exports = {
         logs.push({
             code: "TEXT.SEVERAL_H1",
             error: "H1 только 1",
-            location: type.loc
+            location: this._pos(type.loc)
         });
     },
 
@@ -3138,7 +3138,7 @@ module.exports = {
             logs.push({
                 code: "TEXT.INVALID_H2_POSITION",
                 error: "Заголовок второго уровня (блок text с модификатором type h2) не может находиться перед заголовком первого уровня на том же или более глубоком уровне вложенности.",
-                location: type.loc
+                location: this._pos(type.loc)
             });
 
             return;
@@ -3200,7 +3200,7 @@ module.exports = {
             logs.push({
                 code: "TEXT.INVALID_H3_POSITION",
                 error: "Заголовок третьего уровня (блок text с модификатором type h3) не может находиться перед заголовком второго уровня на том же или более глубоком уровне вложенности.",
-                location: type.loc
+                location: this._pos(type.loc)
             });
         }
     },
@@ -3228,7 +3228,7 @@ module.exports = {
                 logs.push({
                     code: "GRID.TOO_MUCH_MARKETING_BLOCKS",
                     error: "Нужно проверить, что маркетинговые блоки занимают не больше половины от всех колонок блока grid",
-                    location: grid.loc
+                    location: this._pos(grid.loc)
                 });
             }
 
@@ -3285,6 +3285,19 @@ module.exports = {
     
     _isMarketing: function(item){
         return item.help.block == 'commercial' || item.help.block == 'offer';
+    },
+
+    _pos: function(pos){
+        return {
+            start: {
+                column: pos.start.column,
+                line: pos.start.line
+            },
+            end: {
+                column: pos.end.column,
+                line: pos.end.line
+            }
+        };
     }
 }
 },{"./find":2}]},{},[3]);
