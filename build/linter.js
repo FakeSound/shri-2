@@ -2944,6 +2944,7 @@ module.exports = {
      */
     pos2_h1: false,
     pos2_h2: false,
+    pos2_loc: null,
 
     textWarning: function(item){
         if( !this._isText(item) ){ return; }
@@ -2975,7 +2976,7 @@ module.exports = {
         logs.push({
             code: "WARNING.TEXT_SIZES_SHOULD_BE_EQUAL",
             error: "Тексты в блоке warning должны быть одного размера",
-            location: this._pos(size.loc)
+            location: this._pos(parent.loc)
         });
     },
 
@@ -3017,7 +3018,7 @@ module.exports = {
         logs.push({
             code: "WARNING.INVALID_BUTTON_SIZE",
             error: "Размер кнопки должен быть выше эталонного на 1 пункт",
-            location: this._pos(size.loc)
+            location: this._pos(item.loc)
         });
     },
 
@@ -3045,7 +3046,7 @@ module.exports = {
         logs.push({
             code: "WARNING.INVALID_PLACEHOLDER_SIZE",
             error: "Допустимые размеры для блока placeholder в блоке warning (значение модификатора size): s, m, l.",
-            location: this._pos(size.loc)
+            location: this._pos(item.loc)
         });
     },
 
@@ -3115,7 +3116,7 @@ module.exports = {
         logs.push({
             code: "TEXT.SEVERAL_H1",
             error: "H1 только 1",
-            location: this._pos(type.loc)
+            location: this._pos(item.loc)
         });
     },
 
@@ -3138,7 +3139,7 @@ module.exports = {
             logs.push({
                 code: "TEXT.INVALID_H2_POSITION",
                 error: "Заголовок второго уровня (блок text с модификатором type h2) не может находиться перед заголовком первого уровня на том же или более глубоком уровне вложенности.",
-                location: this._pos(type.loc)
+                location: this._pos(this.pos2_loc)
             });
 
             return;
@@ -3150,6 +3151,7 @@ module.exports = {
 
         if( type.value.value == 'h2' ){
             this.pos2_h2 = true;
+            this.pos2_loc = item.loc;
         }
     },
 
@@ -3175,20 +3177,21 @@ module.exports = {
 
         if( type.value.value == 'h3' ){
             item.parent.help.h3 = true;
+            item.parent.help.h3_loc = item.loc;
 
             return;
         }
 
         if( type.value.value == 'h2' ){
             if( item.parent.help.h3 ){
-                localErr();
+                localErr(this._pos(item.parent.help.h3_loc));
 
                 return;
             }
 
             parent = find.parentByHelp(item, 'h3', true)
             if( parent && parent.help.h3 ){
-                localErr();
+                localErr(this._pos(parent.help.h3_loc));
 
                 return;
             }
@@ -3196,11 +3199,12 @@ module.exports = {
             item.parent.help.h2 = true;
         }
 
-        function localErr(){
+        
+        function localErr(loc){
             logs.push({
                 code: "TEXT.INVALID_H3_POSITION",
                 error: "Заголовок третьего уровня (блок text с модификатором type h3) не может находиться перед заголовком второго уровня на том же или более глубоком уровне вложенности.",
-                location: this._pos(type.loc)
+                location: loc
             });
         }
     },
