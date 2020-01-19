@@ -2752,22 +2752,200 @@ return parse$1;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{}],2:[function(require,module,exports){
-(function (global){
-class Rules {
-    constructor() {
-        /**
-         * Для первой
-         */
-        this.pos_h1 = false;
+module.exports = {
+    block: function(item) {
+        return item.children.find(this.chBlock) ? item.children.find(this.chBlock).value.value : null;
+    },
 
-        /**
-         * Для второй
-         */
-        this.pos2_h1 = false;
-        this.pos2_h2 = false;
+    elem: function(item) {
+        return item.children.find(this.chElem) ? item.children.find(this.chElem).value.value : null;
+    },
+
+    mods: function(item) {
+        return item.children.find(this.chMods) ? item.children.find(this.chMods) : null;
+    },
+
+    elemMods: function(item) {
+        return item.children.find(this.chElemMods) ? item.children.find(this.chElemMods) : null;
+    },
+
+    size: function(item) {
+        return item.children.find(this.chSize) ? item.children.find(this.chSize) : null;
+    },
+
+    type: function(item) {
+        return item.children.find(this.chType) ? item.children.find(this.chType) : null;
+    },
+
+    columns: function(item) {
+        return item.children.find(this.chColumns) ? item.children.find(this.chColumns) : null;
+    },
+
+    elemColumns: function(item) {
+        return item.children.find(this.chElemColumns) ? item.children.find(this.chElemColumns) : null;
+    },
+
+    chBlock: function(item) {
+        return item.key.value == 'block';
+    },
+
+    chElem: function(item){
+        return item.key.value == 'elem';
+    },
+
+    chBlockOrElem: function(item){
+        return item.key.value == 'elem' || item.key.value == 'block';
+    },
+
+    chContent: function(item){
+        return item.key.value == 'content';
+    },
+
+    chMods: function(item){
+        return item.key.value == 'mods';
+    },
+
+    chElemMods: function(item){
+        return item.key.value == 'elemMods';
+    },
+
+    chSize: function(item){
+        return item.key.value == 'size';
+    },
+
+    chType: function(item){
+        return item.key.value == 'type';
+    },
+
+    chColumns: function(item){
+        return item.key.value == 'm-columns';
+    },
+
+    chElemColumns: function(item){
+        return item.key.value == 'm-col';
+    },
+
+    parent: function(item, type, name){
+        if( !item.parent ){
+            return false;
+        }
+
+        if( type == 'elem' ){
+            if( item.parent.help.elem == name ){
+                return item.parent;
+            }
+        }else if( type == 'block' ){
+            if( item.parent.help.block == name ){
+                return item.parent;
+            }
+        }
+
+        return this.parent(item.parent, type, name);
+    },
+
+    parentByHelp: function(item, key, value){
+        if( !item.parent ){
+            return false;
+        }
+
+        if( item.parent.help[key] == value ){
+            return item.parent;
+        }
+
+        return this.parentByHelp(item.parent, key, value);
+    }
+}
+},{}],3:[function(require,module,exports){
+(function (global){
+
+var jsonToAst = require('json-to-ast'),
+    find = require('./find'),
+    rules = require('./rules');
+
+function lint(string){
+    var string = string ? string : json;
+
+    if( !string.length ){
+        return logs;
     }
 
-    textWarning(item){
+    function parse(item, parent){
+        var content,
+            parent = parent ? parent : null;
+
+        item.parent = parent;
+
+        if( item.type != 'Object' ){
+            return;
+        }
+
+        /**
+         * Блок или элемент
+         */
+        if( item.children.find(find.chBlockOrElem) ){
+
+            /**
+             * Используется для поиска по родителям и вспомогательным моментам
+             */
+            item.help = {
+                block: find.block(item),
+                elem: find.elem(item),
+            }
+
+            rules.textWarning(item);
+            rules.buttonWarning(item);
+            rules.positionWarning(item);
+            rules.placeholderWarning(item);
+            rules.h1Position(item);
+            rules.h2Position(item);
+            rules.h3Position(item);
+            rules.marketing(item);
+
+            /**
+             * Парсинг контента
+             */
+            content = item.children.find(find.chContent);
+            if( content ){                    
+                content.value.children.forEach(function(child){
+                    parse(child, item);
+                });
+            }
+        }
+    }
+
+    parse(jsonToAst(string))
+
+    return rules.logs();
+}
+
+if (global) {
+    global.lint = lint;
+} else {
+    window.lint = lint;
+}
+
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"./find":2,"./rules":4,"json-to-ast":1}],4:[function(require,module,exports){
+var find = require('./find'),
+    logs = [];
+
+module.exports = {
+    logs: function(){
+        return logs;
+    },
+
+    /**
+     * Для первой
+     */
+    pos_h1: false,
+
+    /**
+     * Для второй
+     */
+    pos2_h1: false,
+    pos2_h2: false,
+
+    textWarning: function(item){
         if( !this._isText(item) ){ return; }
 
         var parent = find.parent(item, 'block', 'warning'),
@@ -2799,9 +2977,9 @@ class Rules {
             error: "Тексты в блоке warning должны быть одного размера",
             location: size.loc
         });
-    }
+    },
 
-    buttonWarning(item){
+    buttonWarning: function(item){
         if( !this._isButton(item) ){ return; }
 
         var parent = find.parent(item, 'block', 'warning'),
@@ -2841,9 +3019,9 @@ class Rules {
             error: "Размер кнопки должен быть выше эталонного на 1 пункт",
             location: size.loc
         });
-    }
+    },
 
-    placeholderWarning(item){
+    placeholderWarning: function(item){
         if( !this._isPlaceholder(item) ){ return; }
 
         var parent = find.parent(item, 'block', 'warning'),
@@ -2869,9 +3047,9 @@ class Rules {
             error: "Допустимые размеры для блока placeholder в блоке warning (значение модификатора size): s, m, l.",
             location: size.loc
         });
-    }
+    },
 
-    positionWarning(item){
+    positionWarning: function(item){
         if( !this._isButton(item) && !this._isPlaceholder(item) ){ return; }
 
         var parent = find.parent(item, 'block', 'warning');
@@ -2908,9 +3086,9 @@ class Rules {
             parent.help.button = true;
             parent.help.button_loc = item.loc;
         }
-    }
+    },
     
-    h1Position(item){
+    h1Position: function(item){
         if( !this._isText(item) ){ return; }
 
         var mods,
@@ -2939,9 +3117,9 @@ class Rules {
             error: "H1 только 1",
             location: type.loc
         });
-    }
+    },
 
-    h2Position(item){
+    h2Position: function(item){
         if( this.pos2_h1 ){ return; }
         if( !this._isText(item) ){ return; }
 
@@ -2973,9 +3151,9 @@ class Rules {
         if( type.value.value == 'h2' ){
             this.pos2_h2 = true;
         }
-    }
+    },
 
-    h3Position(item){
+    h3Position: function(item){
         if( item.parent && item.parent.help.h2 ){ return; }
         if( !this._isText(item) ){ return; }
 
@@ -3025,202 +3203,88 @@ class Rules {
                 location: type.loc
             });
         }
-    }
+    },
 
-    _isText(item){
-        return item.help.block == 'text';
-    }
+    marketing: function(item){
+        if( !this._isGrid(item) && !this._isFraction(item) ){
+            if( this._isMarketing(item) ){
+                var grid = item.parent.parent,
+                    fraction = item.parent;
 
-    _isButton(item){
-        return item.help.block == 'button';
-    }
-
-    _isPlaceholder(item){
-        return item.help.block == 'placeholder';
-    }
-}
-
-class Find {
-    constructor() {
-        
-    }
-
-    block(item) {
-        return item.children.find(this.chBlock) ? item.children.find(this.chBlock).value.value : null;
-    };
-
-    elem(item) {
-        return item.children.find(this.chElem) ? item.children.find(this.chElem).value.value : null;
-    };
-
-    mods(item) {
-        return item.children.find(this.chMods) ? item.children.find(this.chMods) : null;
-    };
-
-    size(item) {
-        return item.children.find(this.chSize) ? item.children.find(this.chSize) : null;
-    }
-
-    type(item) {
-        return item.children.find(this.chType) ? item.children.find(this.chType) : null;
-    }
-
-    chBlock(item) {
-        return item.key.value == 'block';
-    };
-
-    chElem(item){
-        return item.key.value == 'elem';
-    };
-
-    chBlockOrElem(item){
-        return item.key.value == 'elem' || item.key.value == 'block';
-    };
-
-    chContent(item){
-        return item.key.value == 'content';
-    };
-
-    chMods(item){
-        return item.key.value == 'mods';
-    }
-
-    chSize(item){
-        return item.key.value == 'size';
-    }
-
-    chType(item){
-        return item.key.value == 'type';
-    }
-
-    parent(item, type, name){
-        if( !item.parent ){
-            return false;
-        }
-
-        if( type == 'elem' ){
-            if( item.parent.help.elem == name ){
-                return item.parent;
-            }
-        }else if( type == 'block' ){
-            if( item.parent.help.block == name ){
-                return item.parent;
-            }
-        }
-
-        return this.parent(item.parent, type, name);
-    };
-
-    parentByHelp(item, key, value){
-        if( !item.parent ){
-            return false;
-        }
-
-        if( item.parent.help[key] == value ){
-            return item.parent;
-        }
-
-        return this.parentByHelp(item.parent, key, value);
-    };
-}
-
-var jsonToAst = require('json-to-ast'),
-    find = new Find,
-    rules = new Rules,
-    logs = [];
-
-var json = `{
-    "block": "warning",
-    "content": [
-        {
-            "block": "placeholder", 
-            "mods": { "size": "s" } 
-        },
-        {
-            "block": "text",
-            "mods": { "size": "m", "type": "h2" }
-        },
-        {
-            "elem": "content",
-            "content": [
-                {
-                    "block": "text",
-                    "mods": { "size": "m", "type": "h3" }
-                },
-                { 
-                    "block": "button", 
-                    "mods": { "size": "l" } 
-                },
-                { 
-                    "block": "button", 
-                    "mods": { "size": "l" } 
+                if( !grid ){
+                    return;
                 }
-            ]
-        }
-    ]
-}`;
 
-function lint(string){
-    var string = string ? string : json;
+                if( !grid.help.marketing ){
+                    grid.help.marketing = 0;
+                }
 
-    if( !string.length ){
-        return logs;
-    }
+                grid.help.marketing += fraction.help.elemColumns ? parseInt(fraction.help.elemColumns) : 0;
 
-    function parse(item, parent){
-        var content, mods,
-            parent = parent ? parent : null;
+                if( grid.help.marketing < parseInt(grid.help.columns) / 2 ){
+                    return;
+                }
 
-        item.parent = parent;
+                logs.push({
+                    code: "GRID.TOO_MUCH_MARKETING_BLOCKS",
+                    error: "Нужно проверить, что маркетинговые блоки занимают не больше половины от всех колонок блока grid",
+                    location: grid.loc
+                });
+            }
 
-        if( item.type != 'Object' ){
             return;
         }
 
-        /**
-         * Блок или элемент
-         */
-        if( item.children.find(find.chBlockOrElem) ){
-            /**
-             * Запоминаем важное
-             */
-            item.help = {
-                block: find.block(item),
-                elem: find.elem(item),
-            }
+        var mods,
+            columns,
+            elemMods,
+            elemColumns;
 
-            rules.textWarning(item);
-            rules.buttonWarning(item);
-            rules.positionWarning(item);
-            rules.placeholderWarning(item);
-            rules.h1Position(item);
-            rules.h2Position(item);
-            rules.h3Position(item);
+        if( item.help.elem != 'fraction' ){
+            mods = find.mods(item);
+        
+            if( !mods ){ return; }
 
-            /**
-             * Парсинг контента
-             */
-            content = item.children.find(find.chContent);
-            if( content ){                    
-                content.value.children.forEach(function(child){
-                    parse(child, item);
-                });
-            }
+            columns = find.columns(mods.value);
+
+            if( !columns ){ return; }
+
+            item.help.columns = columns.value.value;
+        }else{
+            elemMods = find.elemMods(item);
+        
+            if( !elemMods ){ return; }
+
+            elemColumns = find.elemColumns(elemMods.value);
+
+            if( !elemColumns ){ return; }
+
+            item.help.elemColumns = elemColumns.value.value;
         }
+    },
+
+    _isText: function(item){
+        return item.help.block == 'text';
+    },
+
+    _isButton: function(item){
+        return item.help.block == 'button';
+    },
+
+    _isPlaceholder: function(item){
+        return item.help.block == 'placeholder';
+    },
+
+    _isGrid: function(item){
+        return item.help.block == 'grid';
+    },
+
+    _isFraction: function(item){
+        return item.help.elem == 'fraction';
+    },
+    
+    _isMarketing: function(item){
+        return item.help.block == 'commercial' || item.help.block == 'offer';
     }
-
-    parse(jsonToAst(string))
-
-    return logs;
 }
-
-if (global) {
-    global.lint = lint;
-} else {
-    window.lint = lint;
-}
-
-// lint(json);
-console.log(global.lint(json));
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"json-to-ast":1}]},{},[2]);
+},{"./find":2}]},{},[3]);

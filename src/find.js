@@ -11,12 +11,24 @@ module.exports = {
         return item.children.find(this.chMods) ? item.children.find(this.chMods) : null;
     },
 
+    elemMods: function(item) {
+        return item.children.find(this.chElemMods) ? item.children.find(this.chElemMods) : null;
+    },
+
     size: function(item) {
         return item.children.find(this.chSize) ? item.children.find(this.chSize) : null;
     },
 
     type: function(item) {
         return item.children.find(this.chType) ? item.children.find(this.chType) : null;
+    },
+
+    columns: function(item) {
+        return item.children.find(this.chColumns) ? item.children.find(this.chColumns) : null;
+    },
+
+    elemColumns: function(item) {
+        return item.children.find(this.chElemColumns) ? item.children.find(this.chElemColumns) : null;
     },
 
     chBlock: function(item) {
@@ -39,12 +51,24 @@ module.exports = {
         return item.key.value == 'mods';
     },
 
+    chElemMods: function(item){
+        return item.key.value == 'elemMods';
+    },
+
     chSize: function(item){
         return item.key.value == 'size';
     },
 
     chType: function(item){
         return item.key.value == 'type';
+    },
+
+    chColumns: function(item){
+        return item.key.value == 'm-columns';
+    },
+
+    chElemColumns: function(item){
+        return item.key.value == 'm-col';
     },
 
     parent: function(item, type, name){

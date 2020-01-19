@@ -277,6 +277,64 @@ module.exports = {
         }
     },
 
+    marketing: function(item){
+        if( !this._isGrid(item) && !this._isFraction(item) ){
+            if( this._isMarketing(item) ){
+                var grid = item.parent.parent,
+                    fraction = item.parent;
+
+                if( !grid ){
+                    return;
+                }
+
+                if( !grid.help.marketing ){
+                    grid.help.marketing = 0;
+                }
+
+                grid.help.marketing += fraction.help.elemColumns ? parseInt(fraction.help.elemColumns) : 0;
+
+                if( grid.help.marketing < parseInt(grid.help.columns) / 2 ){
+                    return;
+                }
+
+                logs.push({
+                    code: "GRID.TOO_MUCH_MARKETING_BLOCKS",
+                    error: "Нужно проверить, что маркетинговые блоки занимают не больше половины от всех колонок блока grid",
+                    location: grid.loc
+                });
+            }
+
+            return;
+        }
+
+        var mods,
+            columns,
+            elemMods,
+            elemColumns;
+
+        if( item.help.elem != 'fraction' ){
+            mods = find.mods(item);
+        
+            if( !mods ){ return; }
+
+            columns = find.columns(mods.value);
+
+            if( !columns ){ return; }
+
+            item.help.columns = columns.value.value;
+        }else{
+            elemMods = find.elemMods(item);
+        
+            if( !elemMods ){ return; }
+
+            elemColumns = find.elemColumns(elemMods.value);
+
+            if( !elemColumns ){ return; }
+
+            item.help.elemColumns = elemColumns.value.value;
+        }
+    },
+
     _isText: function(item){
         return item.help.block == 'text';
     },
@@ -287,5 +345,17 @@ module.exports = {
 
     _isPlaceholder: function(item){
         return item.help.block == 'placeholder';
+    },
+
+    _isGrid: function(item){
+        return item.help.block == 'grid';
+    },
+
+    _isFraction: function(item){
+        return item.help.elem == 'fraction';
+    },
+    
+    _isMarketing: function(item){
+        return item.help.block == 'commercial' || item.help.block == 'offer';
     }
 }

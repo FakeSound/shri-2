@@ -3,20 +3,6 @@ var jsonToAst = require('json-to-ast'),
     find = require('./find'),
     rules = require('./rules');
 
-// var json = `{
-//     "block": "warning",
-//     "content": [
-//         {
-//             "block": "text",
-//             "mods": { "type": "h2" }
-//         },
-//         {
-//             "block": "text",
-//             "mods": { "type": "h3" }
-//         }
-//     ]
-// }`;
-
 function lint(string){
     var string = string ? string : json;
 
@@ -25,7 +11,7 @@ function lint(string){
     }
 
     function parse(item, parent){
-        var content, mods,
+        var content,
             parent = parent ? parent : null;
 
         item.parent = parent;
@@ -38,8 +24,9 @@ function lint(string){
          * Блок или элемент
          */
         if( item.children.find(find.chBlockOrElem) ){
+
             /**
-             * Запоминаем важное
+             * Используется для поиска по родителям и вспомогательным моментам
              */
             item.help = {
                 block: find.block(item),
@@ -53,6 +40,7 @@ function lint(string){
             rules.h1Position(item);
             rules.h2Position(item);
             rules.h3Position(item);
+            rules.marketing(item);
 
             /**
              * Парсинг контента
@@ -76,6 +64,3 @@ if (global) {
 } else {
     window.lint = lint;
 }
-
-// lint(json);
-// console.log(global.lint(json));
