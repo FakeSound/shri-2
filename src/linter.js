@@ -4,7 +4,7 @@ class Rules {
     }
 
     textWarning(item){
-        if( this._isText(item) ){ return; }
+        if( !this._isText(item) ){ return; }
 
         var parent = find.parent(item, 'block', 'warning'),
             mods,
@@ -16,9 +16,25 @@ class Rules {
         
         if( !mods ){ return; }
 
-        size = find.size(mods.value).value.value;
+        size = find.size(mods.value);
+        
+        if( !size ){ return; }
+        
+        if( !parent.help.size ){
+            parent.help.size = size.value.value;
 
-        console.log(size);
+            return;
+        }
+
+        if( parent.help.size == size.value.value ){
+            return;
+        }
+
+        logs.push({
+            code: "WARNING.TEXT_SIZES_SHOULD_BE_EQUAL",
+            error: "Тексты в блоке warning должны быть одного размера",
+            location: size.loc
+        });
     }
 
     _isText(item){
@@ -92,7 +108,8 @@ class Find {
 
 var jsonToAst = require('json-to-ast'),
     find = new Find,
-    rules = new Rules;
+    rules = new Rules,
+    logs = [];
 
 var json = `{
     "block": "warning",
@@ -118,8 +135,7 @@ var json = `{
 }`;
 
 function lint(string){
-    var string = string ? string : json,
-        logs = [];
+    var string = string ? string : json;
 
     if( !string.length ){
         return logs;
@@ -161,7 +177,9 @@ function lint(string){
         }
     }
 
-    return parse(jsonToAst(string));
+    parse(jsonToAst(string))
+
+    return logs;
 }
 
-lint();
+console.log(lint());
