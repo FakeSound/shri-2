@@ -3,36 +3,19 @@ var jsonToAst = require('json-to-ast'),
     find = require('./find'),
     rules = require('./rules');
 
-var json = `{
-    "block": "warning",
-    "content": [
-        {
-            "block": "placeholder", 
-            "mods": { "size": "s" } 
-        },
-        {
-            "block": "text",
-            "mods": { "size": "m", "type": "h3" }
-        },
-        {
-            "elem": "content",
-            "content": [
-                {
-                    "block": "text",
-                    "mods": { "size": "m", "type": "h2" }
-                },
-                { 
-                    "block": "button", 
-                    "mods": { "size": "l" } 
-                },
-                { 
-                    "block": "button", 
-                    "mods": { "size": "l" } 
-                }
-            ]
-        }
-    ]
-}`;
+// var json = `{
+//     "block": "warning",
+//     "content": [
+//         {
+//             "block": "text",
+//             "mods": { "type": "h2" }
+//         },
+//         {
+//             "block": "text",
+//             "mods": { "type": "h3" }
+//         }
+//     ]
+// }`;
 
 function lint(string){
     var string = string ? string : json;
@@ -95,4 +78,4 @@ if (global) {
 }
 
 // lint(json);
-console.log(global.lint(json));
+// console.log(global.lint(json));
