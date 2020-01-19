@@ -1,6 +1,6 @@
 class Rules {
     constructor() {
-
+        this.h1 = false;
     }
 
     textWarning(item){
@@ -145,6 +145,68 @@ class Rules {
             parent.help.button_loc = item.loc;
         }
     }
+    
+    h1Position(item){
+        if( !this._isText(item) ){ return; }
+
+        var mods,
+            type;
+        
+        mods = find.mods(item);
+        
+        if( !mods ){ return; }
+
+        type = find.type(mods.value);
+        
+        if( !type ){ return; }
+
+        if( type.value.value != 'h1' ){
+            return;
+        }
+
+        if( !this.h1 ){
+            this.h1 = true;
+            
+            return;
+        }
+
+        logs.push({
+            code: "TEXT.SEVERAL_H1",
+            error: "H1 только 1",
+            location: type.loc
+        });
+    }
+
+    h2Position(item){
+        if( !this._isText(item) ){ return; }
+
+        var mods,
+            type;
+        
+        mods = find.mods(item);
+        
+        if( !mods ){ return; }
+
+        type = find.type(mods.value);
+        
+        if( !type ){ return; }
+
+        if( type.value.value != 'h1' ){
+            return;
+        }
+
+        if( !this.h1 ){
+            this.h1 = true;
+            
+            return;
+        }
+
+        logs.push({
+            code: "TEXT.SEVERAL_H1",
+            error: "H1 только 1",
+            location: type.loc
+        });
+    }
 
     _isText(item){
         return item.help.block == 'text';
@@ -180,6 +242,10 @@ class Find {
         return item.children.find(this.chSize) ? item.children.find(this.chSize) : null;
     }
 
+    type(item) {
+        return item.children.find(this.chType) ? item.children.find(this.chType) : null;
+    }
+
     chBlock(item) {
         return item.key.value == 'block';
     };
@@ -202,6 +268,10 @@ class Find {
 
     chSize(item){
         return item.key.value == 'size';
+    }
+
+    chType(item){
+        return item.key.value == 'type';
     }
 
     parent(item, type, name){
@@ -236,11 +306,11 @@ var json = `{
             "content": [
                 {
                     "block": "text",
-                    "mods": { "size": "m" }
+                    "mods": { "size": "m", "type": "h1" }
                 },
                 {
                     "block": "text",
-                    "mods": { "size": "l" }
+                    "mods": { "size": "l", "type": "h2" }
                 },
                 { 
                     "block": "button", 
@@ -292,6 +362,7 @@ function lint(string){
             rules.buttonWarning(item);
             rules.positionWarning(item);
             rules.placeholderWarning(item);
+            rules.h1Position(item);
 
             /**
              * Парсинг контента
