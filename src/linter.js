@@ -1,6 +1,15 @@
 class Rules {
     constructor() {
-        this.h1 = false;
+        /**
+         * Для первой
+         */
+        this.pos_h1 = false;
+
+        /**
+         * Для второй
+         */
+        this.pos2_h1 = false;
+        this.pos2_h2 = false;
     }
 
     textWarning(item){
@@ -164,8 +173,8 @@ class Rules {
             return;
         }
 
-        if( !this.h1 ){
-            this.h1 = true;
+        if( !this.pos_h1 ){
+            this.pos_h1 = true;
             
             return;
         }
@@ -178,6 +187,7 @@ class Rules {
     }
 
     h2Position(item){
+        if( this.pos2_h1 ){ return; }
         if( !this._isText(item) ){ return; }
 
         var mods,
@@ -191,21 +201,75 @@ class Rules {
         
         if( !type ){ return; }
 
-        if( type.value.value != 'h1' ){
+        if( type.value.value == 'h1' && this.pos2_h2 ){
+            logs.push({
+                code: "TEXT.INVALID_H2_POSITION",
+                error: "Заголовок второго уровня (блок text с модификатором type h2) не может находиться перед заголовком первого уровня на том же или более глубоком уровне вложенности.",
+                location: type.loc
+            });
+
             return;
         }
 
-        if( !this.h1 ){
-            this.h1 = true;
-            
+        if( type.value.value == 'h1' ){
+            this.pos2_h1 = true;
+        }
+
+        if( type.value.value == 'h2' ){
+            this.pos2_h2 = true;
+        }
+    }
+
+    h3Position(item){
+        if( item.parent && item.parent.help.h2 ){ return; }
+        if( !this._isText(item) ){ return; }
+
+        var mods,
+            type,
+            parent;
+        
+        mods = find.mods(item);
+        
+        if( !mods ){ return; }
+
+        type = find.type(mods.value);
+        
+        if( !type ){ return; }
+
+        if( type.value.value != 'h2' && type.value.value != 'h3' ){
             return;
         }
 
-        logs.push({
-            code: "TEXT.SEVERAL_H1",
-            error: "H1 только 1",
-            location: type.loc
-        });
+        if( type.value.value == 'h3' ){
+            item.parent.help.h3 = true;
+
+            return;
+        }
+
+        if( type.value.value == 'h2' ){
+            if( item.parent.help.h3 ){
+                localErr();
+
+                return;
+            }
+
+            parent = find.parentByHelp(item, 'h3', true)
+            if( parent && parent.help.h3 ){
+                localErr();
+
+                return;
+            }
+
+            item.parent.help.h2 = true;
+        }
+
+        function localErr(){
+            logs.push({
+                code: "TEXT.INVALID_H3_POSITION",
+                error: "Заголовок третьего уровня (блок text с модификатором type h3) не может находиться перед заголовком второго уровня на том же или более глубоком уровне вложенности.",
+                location: type.loc
+            });
+        }
     }
 
     _isText(item){
@@ -291,6 +355,18 @@ class Find {
 
         return this.parent(item.parent, type, name);
     };
+
+    parentByHelp(item, key, value){
+        if( !item.parent ){
+            return false;
+        }
+
+        if( item.parent.help[key] == value ){
+            return item.parent;
+        }
+
+        return this.parentByHelp(item.parent, key, value);
+    };
 }
 
 var jsonToAst = require('json-to-ast'),
@@ -302,15 +378,19 @@ var json = `{
     "block": "warning",
     "content": [
         {
+            "block": "placeholder", 
+            "mods": { "size": "s" } 
+        },
+        {
+            "block": "text",
+            "mods": { "size": "m", "type": "h2" }
+        },
+        {
             "elem": "content",
             "content": [
                 {
                     "block": "text",
-                    "mods": { "size": "m", "type": "h1" }
-                },
-                {
-                    "block": "text",
-                    "mods": { "size": "l", "type": "h2" }
+                    "mods": { "size": "m", "type": "h3" }
                 },
                 { 
                     "block": "button", 
@@ -318,11 +398,7 @@ var json = `{
                 },
                 { 
                     "block": "button", 
-                    "mods": { "size": "s" } 
-                },
-                {
-                    "block": "placeholder", 
-                    "mods": { "size": "s" } 
+                    "mods": { "size": "l" } 
                 }
             ]
         }
@@ -363,6 +439,8 @@ function lint(string){
             rules.positionWarning(item);
             rules.placeholderWarning(item);
             rules.h1Position(item);
+            rules.h2Position(item);
+            rules.h3Position(item);
 
             /**
              * Парсинг контента
@@ -382,10 +460,10 @@ function lint(string){
 }
 
 if (global) {
-    global.lint = lint
+    global.lint = lint;
 } else {
-    window.lint = lint
+    window.lint = lint;
 }
 
 // lint(json);
-console.log(lint(json));
+console.log(global.lint(json));
