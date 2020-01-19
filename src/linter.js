@@ -182,4 +182,10 @@ function lint(string){
     return logs;
 }
 
-console.log(lint());
+if (global) {
+    global.lint = lint
+} else {
+    window.lint = lint
+}
+
+// console.log(lint());

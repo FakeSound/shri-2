@@ -154,10 +154,10 @@ exports.fonts = fonts;
 exports.html = html;
 exports.css = css;
 exports.js = js;
-exports.dev = gulp.parallel(css, js);
-exports.build = gulp.parallel(css, js);
+exports.dev = gulp.parallel(js);
+exports.build = gulp.parallel(js);
 exports.default = gulp.series(
-    gulp.parallel(css, js),
+    gulp.parallel(js),
     watch
     // watch,
     // server
