@@ -13,7 +13,7 @@
   "license": "ISC",
   "dependencies": {
     "bem-xjst": "^8.9.6",
-    "browser-sync": "^2.24.6",
+    "browser-sync": "^2.27.10",
     "browserify": "^16.2.3",
     "express": "^4.17.1",
     "gulp": "^4.0.0",
