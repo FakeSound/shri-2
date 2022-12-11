@@ -15,7 +15,7 @@
     "bem-xjst": "^8.9.6",
     "browser-sync": "^2.24.6",
     "browserify": "^16.2.3",
-    "express": "^4.17.1",
+    "express": "^4.17.3",
     "gulp": "^4.0.0",
     "gulp-autoprefixer": "5.0.0",
     "gulp-image-resize": "^0.13.0",
